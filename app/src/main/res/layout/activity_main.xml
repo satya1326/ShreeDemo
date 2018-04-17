@@ -12,18 +12,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/upload_image_here"
-        android:textSize="@dimen/_15sdp"
+        android:textSize="@dimen/_18sdp"
         android:layout_above="@id/imageUpload"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="@dimen/_15sdp"
         android:fontFamily="@font/gothic"/>
     <ImageView
         android:id="@+id/imageUpload"
-        android:layout_width="@dimen/_250sdp"
-        android:layout_height="@dimen/_250sdp"
+        android:layout_width="@dimen/_300sdp"
+        android:layout_height="@dimen/_300sdp"
         android:layout_centerInParent="true"
         android:src="@drawable/pic_default"
-        android:scaleType="centerCrop"/>
+        android:scaleType="fitXY"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
