@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/upload_image_here"
-        android:textSize="@dimen/_25sdp"
+        android:textSize="@dimen/_15sdp"
         android:layout_above="@id/imageUpload"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="@dimen/_15sdp"

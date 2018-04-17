@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">SatyaImg</string>
-    <string name="upload_image_here">Upload Image Here</string>
+    <string name="upload_image_here">To upload image click below!</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.hp.shreedemo;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,16 +9,22 @@ import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -74,10 +81,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        });
 //        imgDialog.create();
         AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
-        pictureDialog.setTitle("Profile photo");
+        pictureDialog.setTitle("Add photo");
         String[] pictureDialogItems = {
-                "Gallery",
-                "Camera" };
+                "From Gallery",
+                "From Camera" };
         pictureDialog.setItems(pictureDialogItems,
                 new DialogInterface.OnClickListener() {
                     @Override
@@ -88,13 +95,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     //TODO: enters here in case Permission is not granted
                                     Log.d("entered","here0");
                                     //TODO: showing an explanation to user
-                                    if(ActivityCompat.shouldShowRequestPermissionRationale(MyProfileActivity.this,Manifest.permission.READ_EXTERNAL_STORAGE)){
-                                        MyToast.toastLong(MyProfileActivity.this,"Application needs storage permission to upload image");
+                                    if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,Manifest.permission.READ_EXTERNAL_STORAGE)){
+                                        MyToast.toastLong(MainActivity.this,"Application needs storage permission to upload image");
                                         Log.d("entered","here1");
                                     }
                                     else {
                                         Log.d("entered","here2");
-                                        ActivityCompat.requestPermissions(MyProfileActivity.this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},GALLERY);
+                                        ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},GALLERY);
                                     }}
                                 else {
                                     choosePhotoFromGallery();
@@ -105,13 +112,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     //TODO: enters here in case Permission is not granted
                                     Log.d("entered","here0");
                                     //TODO: showing an explanation to user
-                                    if(ActivityCompat.shouldShowRequestPermissionRationale(MyProfileActivity.this,Manifest.permission.CAMERA)){
-                                        MyToast.toastLong(MyProfileActivity.this,"Application needs camera permission to upload image");
+                                    if(ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,Manifest.permission.CAMERA)){
+                                        MyToast.toastLong(MainActivity.this,"Application needs camera permission to upload image");
                                         Log.d("entered","here1");
                                     }
                                     else {
                                         Log.d("entered","here2");
-                                        ActivityCompat.requestPermissions(MyProfileActivity.this,new String[]{Manifest.permission.CAMERA},CAMERA);
+                                        ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.CAMERA},CAMERA);
                                     }}
                                 else {
                                     takePhotoFromCamera();
@@ -136,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     // TODO: permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    MyToast.toastLong(MyProfileActivity.this,"Application needs camera permission to upload image");
+                    MyToast.toastLong(MainActivity.this,"Application needs camera permission to upload image");
                 }
                 return;
             }
@@ -149,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     //TODO: permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    MyToast.toastLong(MyProfileActivity.this,"Application needs camera permission to upload image");
+                    MyToast.toastLong(MainActivity.this,"Application needs camera permission to upload image");
                 }
                 return;
             }
@@ -186,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     currentImage = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
                     String path = saveImage(currentImage);
                     Log.d("pathGallery",path);
-                    Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Image Uploaded Successfully!", Toast.LENGTH_SHORT).show();
                     imageUpload.setImageBitmap(currentImage);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -254,4 +261,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             System.gc();
         }
     }
+
+    //this is used to open the exit app alert dialog
+    boolean doubleBackToExitPressedOnce = false;
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onBackPressed() {
+            if (doubleBackToExitPressedOnce) {
+                super.onBackPressed();
+                return;
+            }
+            this.doubleBackToExitPressedOnce = true;
+            //Toast.makeText(this, "Press again to exit", Toast.LENGTH_SHORT).show();
+            //TODO : using a customized toast in android
+            LayoutInflater inflater = getLayoutInflater();
+            View layout = inflater.inflate(R.layout.custom_toast,
+                    (ViewGroup) findViewById(R.id.custom_toast_container));
+            TextView text =  layout.findViewById(R.id.text);
+            text.setText(R.string.exit_msg);
+            Toast toast = new Toast(getApplicationContext());
+            toast.setGravity(Gravity.BOTTOM, 0, 50);
+            toast.setDuration(Toast.LENGTH_SHORT);
+            toast.setView(layout);
+            toast.show();
+            //TODO : this is used to make the exit condition false after the two seconds
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    doubleBackToExitPressedOnce=false;
+                }
+            }, 2000);
+        }
 }
