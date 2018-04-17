@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <font
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        android:font="@font/gothic" />
+    <font
+        android:fontStyle="italic"
+        android:fontWeight="400"
+        android:font="@font/gothicb" />
+    <font
+        android:fontStyle="italic"
+        android:fontWeight="400"
+        android:font="@font/gothicbi" />
+    <font
+        android:fontStyle="italic"
+        android:fontWeight="400"
+        android:font="@font/gothici" />
+    <font
+        android:fontStyle="italic"
+        android:fontWeight="400"
+        android:font="@font/dekar" />
+    <font
+        android:fontStyle="italic"
+        android:fontWeight="400"
+        android:font="@font/dekarlight" />
+</font-family>

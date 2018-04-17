@@ -1,19 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
+    <include
+        layout="@layout/header" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World! This is Shree!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="HardcodedText" />
+        android:text="@string/upload_image_here"
+        android:textSize="@dimen/_25sdp"
+        android:layout_above="@id/imageUpload"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/_15sdp"
+        android:fontFamily="@font/gothic"/>
+    <ImageView
+        android:id="@+id/imageUpload"
+        android:layout_width="@dimen/_250sdp"
+        android:layout_height="@dimen/_250sdp"
+        android:layout_centerInParent="true"
+        android:src="@drawable/pic_default"
+        android:scaleType="centerCrop"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Location"
+        android:visibility="gone"
+        android:layout_margin="@dimen/_25sdp"
+        android:gravity="start"
+        android:textSize="@dimen/_15sdp"
+        android:layout_below="@id/imageUpload"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/_15sdp"
+        android:fontFamily="@font/gothic"/>
 
-</android.support.constraint.ConstraintLayout>
+</RelativeLayout>
