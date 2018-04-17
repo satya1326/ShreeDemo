@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SatyaImg</string>
     <string name="upload_image_here">To upload image click below!</string>
+    <string name="exit_msg">Press again to exit</string>
 </resources>

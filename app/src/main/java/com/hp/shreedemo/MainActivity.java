@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     currentImage = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
                     String path = saveImage(currentImage);
                     Log.d("pathGallery",path);
-                    Toast.makeText(MainActivity.this, "Image Uploaded Successfully!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
                     imageUpload.setImageBitmap(currentImage);
                 } catch (IOException e) {
                     e.printStackTrace();
