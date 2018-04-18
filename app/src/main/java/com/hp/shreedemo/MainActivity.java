@@ -5,8 +5,11 @@ import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Location;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
@@ -20,6 +23,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -36,19 +40,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     //TODO: views initialisation
     private ImageView imageUpload;
+    private TextView locationTxt;
+    AlertDialog.Builder pictureDialog;
     //TODO: this is for the image upload
     private File mImageFile;
     private Bitmap currentImage;
     public final int GALLERY = 1;
     public final int CAMERA= 2;
     private static final String IMAGE_DIRECTORY = "/satyaImg";
-
-
     public final String APP_TAG = "MyCustomApp";
-    public final static int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 1034;
     public String photoFileName = "photo.jpg";
     File photoFile;
 
@@ -61,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initialiseViews() {
         imageUpload = findViewById(R.id.imageUpload);
+        locationTxt = findViewById(R.id.locationTxt);
+        locationTxt.setVisibility(View.GONE);
         imageUpload.setOnClickListener(this);
     }
 
@@ -73,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
+
     private void openingImageAlert() {
         //TODO: my alert dialog
 //        AlertDialog.Builder imgDialog  = new AlertDialog.Builder(this);
@@ -90,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            }
 //        });
 //        imgDialog.create();
-        AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
+        pictureDialog = new AlertDialog.Builder(this);
         pictureDialog.setTitle("Add photo");
         String[] pictureDialogItems = {
                 "From Gallery",
@@ -138,11 +144,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
         pictureDialog.show();
     }
+
     //TODO: this is used to handle the response of the request permission
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         switch (requestCode){
+
+
             //TODO: if gallery permission is granted
             case GALLERY: {
                 // TODO: If request is cancelled, the result arrays are empty.
@@ -219,59 +229,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == this.RESULT_CANCELED) {
+            Toast.makeText(this, "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (requestCode == GALLERY) {
-            if (data != null) {
-                Uri contentURI = data.getData();
+
+        if (resultCode == RESULT_OK) {
+
+            if (requestCode == GALLERY) {
+                if (data != null) {
+                    Uri contentURI = data.getData();
+                    try {
+                        currentImage = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
+                        String path = saveImage(currentImage);
+                        Log.d("pathGallery",path);
+                        Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+                        imageUpload.setImageBitmap(currentImage);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Toast.makeText(MainActivity.this, "Failed!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else if (requestCode == CAMERA) {
+
+                // See code above
+                File takenPhotoUri = getPhotoFileUri(photoFileName);
+// by this point we have the camera photo on disk
+                Bitmap rawTakenImage = BitmapFactory.decodeFile(takenPhotoUri.getPath());
+// See BitmapScaler.java: https://gist.github.com/nesquena/3885707fd3773c09f1bb
+                Bitmap resizedBitmap = BitmapScaler.scaleToFitWidth(rawTakenImage, 700);
+                // Configure byte output stream
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+// Compress the image further
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+// Create a new file for the resized bitmap (`getPhotoFileUri` defined above)
+                File resizedUri = getPhotoFileUri(photoFileName + "_resized");
+                File resizedFile = new File(resizedUri.getPath());
                 try {
-                    currentImage = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
-                    String path = saveImage(currentImage);
-                    Log.d("pathGallery",path);
-                    Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
-                    imageUpload.setImageBitmap(currentImage);
+                    resizedFile.createNewFile();
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Toast.makeText(MainActivity.this, "Failed!", Toast.LENGTH_SHORT).show();
                 }
-            }
-        } else if (requestCode == CAMERA) {
-
-            // See code above
-            File takenPhotoUri = getPhotoFileUri(photoFileName);
-// by this point we have the camera photo on disk
-            Bitmap rawTakenImage = BitmapFactory.decodeFile(takenPhotoUri.getPath());
-// See BitmapScaler.java: https://gist.github.com/nesquena/3885707fd3773c09f1bb
-            Bitmap resizedBitmap = BitmapScaler.scaleToFitWidth(rawTakenImage, 120);
-            // Configure byte output stream
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-// Compress the image further
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 40, bytes);
-// Create a new file for the resized bitmap (`getPhotoFileUri` defined above)
-            File resizedUri = getPhotoFileUri(photoFileName + "_resized");
-            File resizedFile = new File(resizedUri.getPath());
-            try {
-                resizedFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            FileOutputStream fos = null;
-            try {
-                fos = new FileOutputStream(resizedFile);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(resizedFile);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
 // Write the bytes of the bitmap to file
-            try {
-                fos.write(bytes.toByteArray());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                try {
+                    fos.write(bytes.toByteArray());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
 
 
@@ -279,23 +293,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            //TODO : this is the solution to make the image not blurred
 //            // here you image has been save to the path mImageFile.
 //            Log.d("ImagePath", "Image saved to path : " + mImageFile.getAbsolutePath());
-            currentImage = BitmapFactory.decodeFile(resizedFile.getAbsolutePath());
+                currentImage = BitmapFactory.decodeFile(resizedFile.getAbsolutePath());
 //
 //            //TODO: used to compress
 //            Bitmap resizedBitmap = BitmapScaler.scaleToFitWidth(currentImage, 120);
 //
 //
-             imageUpload.setImageBitmap(currentImage);
-             saveImage(currentImage);
-             Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+                imageUpload.setImageBitmap(currentImage);
+                saveImage(currentImage);
+                Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
 
 
-            //TODO: this method is previously used but it results in blurred image
+                //TODO: this method is previously used but it results in blurred image
 //            currentImage = (Bitmap) data.getExtras().get("data");
 //            Log.d("pathCamera",currentImage.toString());
 //            imageUpload.setImageBitmap(currentImage);
 //            saveImage(currentImage);
 //            Toast.makeText(MainActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+            }
+
+        } else { // Result was a failure
+            Toast.makeText(this, "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
         }
     }
     private String saveImage(Bitmap thumbnail) {
@@ -400,4 +418,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }, 2000);
         }
+
+
 }
