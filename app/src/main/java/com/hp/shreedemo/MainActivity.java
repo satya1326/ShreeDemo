@@ -2,6 +2,7 @@ package com.hp.shreedemo;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,13 +10,17 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -33,6 +38,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.hp.shreedemo.LocationUtil.LocationHelper;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,7 +52,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,ActivityCompat.OnRequestPermissionsResultCallback {
     //TODO: views initialisation
     private ImageView imageUpload;
     private TextView locationTxt;
@@ -49,11 +62,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private File mImageFile;
     private Bitmap currentImage;
     public final int GALLERY = 1;
-    public final int CAMERA= 2;
+    public final int CAMERA = 2;
     private static final String IMAGE_DIRECTORY = "/satyaImg";
     public final String APP_TAG = "MyCustomApp";
     public String photoFileName = "photo.jpg";
     File photoFile;
+
+    //private FusedLocationProviderClient mFusedLocationClient;
+
+    private Location mLastLocation;
+
+    double latitude;
+    double longitude;
+
+    LocationHelper locationHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,19 +86,122 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initialiseViews() {
         imageUpload = findViewById(R.id.imageUpload);
+       // mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         locationTxt = findViewById(R.id.locationTxt);
         locationTxt.setVisibility(View.GONE);
         imageUpload.setOnClickListener(this);
+        locationHelper=new LocationHelper(this);
+        locationHelper.checkpermission();
+
+        // check availability of play services
+        if (locationHelper.checkPlayServices()) {
+
+            // Building the GoogleApi client
+            locationHelper.buildGoogleApiClient();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        locationHelper.checkPlayServices();
     }
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.imageUpload:
                 //TODO: calling the image upload method here
+                mLastLocation=locationHelper.getLocation();
+
+                if (mLastLocation != null) {
+                    latitude = mLastLocation.getLatitude();
+                    longitude = mLastLocation.getLongitude();
+                    getAddress();
+
+                } else {
+                    MyToast.toastLong(this,"Couldn't get the location. Make sure location is enabled on the device");
+                }
                 openingImageAlert();
+//                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                    // TODO: Consider calling
+//                    //    ActivityCompat#requestPermissions
+//                    // here to request the missing permissions, and then overriding
+//                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                    //                                          int[] grantResults)
+//                    // to handle the case where the user grants the permission. See the documentation
+//                    // for ActivityCompat#requestPermissions for more details.
+//                    return;
+//                }
+//                mFusedLocationClient.getLastLocation()
+//                        .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+//                            @Override
+//                            public void onSuccess(Location location) {
+//
+//                                Log.d("location_found",String.valueOf(location));
+//                                // Got last known location. In some rare situations this can be null.
+//                                if (location != null) {
+//                                    // Logic to handle location object
+//                                }
+//                            }
+//                        });
                 break;
         }
+    }
+
+    public void getAddress()
+    {
+        Address locationAddress;
+
+        locationAddress=locationHelper.getAddress(latitude,longitude);
+
+        if(locationAddress!=null)
+        {
+
+            String address = locationAddress.getAddressLine(0);
+            String address1 = locationAddress.getAddressLine(1);
+            String city = locationAddress.getLocality();
+            String state = locationAddress.getAdminArea();
+            String country = locationAddress.getCountryName();
+            String postalCode = locationAddress.getPostalCode();
+
+
+            String currentLocation;
+
+            if(!TextUtils.isEmpty(address))
+            {
+                currentLocation=address;
+
+                if (!TextUtils.isEmpty(address1))
+                    currentLocation+="\n"+address1;
+
+                if (!TextUtils.isEmpty(city))
+                {
+                    currentLocation+="\n"+city;
+
+                    if (!TextUtils.isEmpty(postalCode))
+                        currentLocation+=" - "+postalCode;
+                }
+                else
+                {
+                    if (!TextUtils.isEmpty(postalCode))
+                        currentLocation+="\n"+postalCode;
+                }
+
+                if (!TextUtils.isEmpty(state))
+                    currentLocation+="\n"+state;
+
+                if (!TextUtils.isEmpty(country))
+                    currentLocation+="\n"+country;
+
+                locationTxt.setText(currentLocation);
+                locationTxt.setVisibility(View.VISIBLE);
+
+            }
+
+        }
+        else
+            MyToast.toastLong(this,"Something went wrong");
     }
 
     private void openingImageAlert() {
@@ -149,6 +274,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // redirects to utils
+        try{
+            locationHelper.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        }
+        catch (NullPointerException e){
+           e.printStackTrace();
+        }
 
         switch (requestCode){
 
@@ -228,6 +360,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        locationHelper.onActivityResult(requestCode,resultCode,data);
         if (resultCode == this.RESULT_CANCELED) {
             Toast.makeText(this, "Picture wasn't taken!", Toast.LENGTH_SHORT).show();
             return;
@@ -420,4 +553,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
+    /**
+     * Google api callback methods
+     */
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        Log.i("Connection failed:", " ConnectionResult.getErrorCode() = "
+                + result.getErrorCode());
+    }
+
+    @Override
+    public void onConnected(Bundle arg0) {
+
+        // Once connected with google api, get the location
+        mLastLocation=locationHelper.getLocation();
+    }
+
+    @Override
+    public void onConnectionSuspended(int arg0) {
+        locationHelper.connectApiClient();
+    }
+
+    public void showToast(String message)
+    {
+        Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
+    }
 }
