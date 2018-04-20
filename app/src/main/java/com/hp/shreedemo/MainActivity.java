@@ -122,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     MyToast.toastLong(this,"Couldn't get the location. Make sure location is enabled on the device");
                 }
-                openingImageAlert();
 //                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 //                    // TODO: Consider calling
 //                    //    ActivityCompat#requestPermissions
@@ -151,6 +150,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void getAddress()
     {
+        openingImageAlert();
+
         Address locationAddress;
 
         locationAddress=locationHelper.getAddress(latitude,longitude);
